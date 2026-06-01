@@ -84,7 +84,7 @@ def export_status(
 ):
     result = fetch_rows("""
         SELECT *
-        FROM tg_bot.status
+        FROM main_db.tg_bot.status
         LIMIT 1000
     """)
 
