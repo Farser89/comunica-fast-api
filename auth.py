@@ -1,9 +1,11 @@
 import os
 import hmac
 from dataclasses import dataclass
-from fastapi import Header, HTTPException, status
 
+from dotenv import load_dotenv
+from fastapi import Header, HTTPException, status, Depends
 
+load_dotenv()
 @dataclass
 class ApiClient:
     client_id: str
@@ -25,13 +27,11 @@ def load_api_clients() -> list[ApiClient]:
         except ValueError:
             raise RuntimeError("Invalid API_KEYS format")
 
-        scopes = {scope.strip() for scope in scopes_raw.split(",") if scope.strip()}
-
         clients.append(
             ApiClient(
                 client_id=client_id,
                 api_key=api_key,
-                scopes=scopes,
+                scopes={scope.strip() for scope in scopes_raw.split(",") if scope.strip()},
             )
         )
 
@@ -59,7 +59,7 @@ def get_api_client(x_api_key: str | None = Header(default=None)) -> ApiClient:
 
 
 def require_scope(required_scope: str):
-    def dependency(client: ApiClient = get_api_client) -> ApiClient:
+    def dependency(client: ApiClient = Depends(get_api_client)) -> ApiClient:
         if required_scope not in client.scopes:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
