@@ -83,9 +83,19 @@ def export_status(
     client: ApiClient = Depends(require_scope("status.read")),
 ):
     result = fetch_rows("""
-        SELECT *
+        select 
+            user_id,	
+            username,
+            status,
+            date,
+            tech_load_ts
+        from (
+        SELECT 
+            *,
+            row_number() over(partition by user_id, date order by tech_load_ts desc) as rn 
         FROM main_db.tg_bot.status
-        LIMIT 1000
+        ) as t
+        where rn = 1 
     """)
 
     return {
